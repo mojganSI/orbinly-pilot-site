@@ -1,0 +1,15 @@
+{
+  "name": "orbinly-pilot-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Orbinly CRM: a fictional static site used as a controlled subject for SEO / GEO / AEO validation.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/contract.test.mjs",
+    "serve": "node scripts/serve.mjs"
+  }
+}
