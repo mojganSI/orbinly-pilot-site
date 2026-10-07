@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { renderPage } from './src/layout.mjs';
+import notFound from './src/not-found.mjs';
 import pages from './src/pages/index.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -77,6 +78,8 @@ export async function build({ baseUrl, googleSiteVerification = '', outDir = joi
     await mkdir(dirname(file), { recursive: true });
     await writeFile(file, renderPage(page, { absoluteUrl, css, googleSiteVerification }));
   }
+  // Static hosts serve /404.html, with status 404, for any URL that matches no file.
+  await writeFile(join(outDir, '404.html'), renderPage(notFound, { absoluteUrl, css }));
   await writeFile(join(outDir, 'sitemap.xml'), sitemapXml(absoluteUrl));
   await writeFile(join(outDir, 'robots.txt'), robotsTxt(absoluteUrl));
 

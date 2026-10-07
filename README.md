@@ -41,6 +41,7 @@ src/site.mjs         brand, notice, navigation, fixed dates
 src/layout.mjs       HTML shell: head, header, footer
 src/style.css        inlined into every page
 src/pages/*.mjs      one module per route: metadata, JSON-LD and body
+src/not-found.mjs    the 404 page, written to dist/404.html
 public/              copied verbatim into dist/ (verification files go here)
 scripts/serve.mjs    local static server for checks
 tests/               contract and its tests
@@ -90,7 +91,9 @@ A DNS record needs no change to the site.
 
 ## Hosting
 
-`dist/` is plain static output: eight `index.html` files, `robots.txt` and `sitemap.xml`. Any
+`dist/` is plain static output: eight `index.html` files, `404.html`, `robots.txt` and
+`sitemap.xml`. `404.html` is what static hosts serve, with status 404, for unknown URLs; it is
+`noindex`, has no canonical or structured data, and is not one of the eight contract routes. Any
 static host works with build command `npm run build` and output directory `dist`. No
 platform-specific configuration is included. After deploying, check on the live host that paths
 keep their trailing slash and that no extra headers or redirects were added.

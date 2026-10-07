@@ -125,7 +125,8 @@ describe('routes', () => {
     const pages = (await filesUnder(DIST))
       .filter((file) => file.endsWith('.html'))
       .map((file) => '/' + relative(DIST, file).replace(/index\.html$/, ''));
-    assert.deepEqual(pages.sort(), [...ROUTES].sort());
+    // 404.html is the only other HTML file; it is not a route (see "not-found page").
+    assert.deepEqual(pages.sort(), [...ROUTES, '/404.html'].sort());
   });
 
   test('internal links use trailing slashes and point at real routes', () => {
@@ -313,6 +314,57 @@ describe('prompt mapping', () => {
       assert.deepEqual(mappedPages(prompt), expected);
     });
   }
+});
+
+describe('not-found page', () => {
+  // Unknown URLs must answer 404, never 200 with the home page. Built files are checked as
+  // /404.html; a running server is checked by requesting paths that do not exist.
+  const UNKNOWN = ['/nope/', '/crm/nope/', '/does-not-exist.html', '/favicon.ico'];
+  let page;
+
+  before(async () => {
+    page = (await load(ORIGIN ? UNKNOWN[0] : '/404.html')).body;
+  });
+
+  test('404.html exists in the build', { skip: Boolean(ORIGIN) }, async () => {
+    assert.equal((await load('/404.html')).status, 200);
+  });
+
+  test('unknown URLs return HTTP 404', { skip: !ORIGIN }, async () => {
+    for (const path of UNKNOWN) assert.equal((await load(path)).status, 404, path);
+  });
+
+  test('is a plain "Page not found" page', () => {
+    assert.deepEqual(titles(page), ['Page not found | Orbinly']);
+    assert.deepEqual(
+      headings(page).map((h) => h.text),
+      ['Page not found'],
+    );
+    assert.ok(mainWordCount(page) < 60, 'no product content');
+    assert.ok(textOf(elements(page, 'footer')[0].inner).includes(NOTICE));
+  });
+
+  test('is noindex, with no canonical, description or structured data', () => {
+    assert.ok(meta(page, 'robots').join(',').toLowerCase().includes('noindex'));
+    assert.equal(canonicals(page).length, 0);
+    assert.equal(meta(page, 'description').length, 0);
+    assert.equal(elements(page, 'script').length, 0);
+  });
+
+  test('is not in the sitemap and is not linked from any page', () => {
+    assert.ok(!sitemap.includes('404'));
+    for (const route of ROUTES) {
+      assert.ok(!anchors(html[route]).some((href) => href.includes('404')), route);
+    }
+  });
+
+  test('does not change the eight-route contract', () => {
+    assert.equal(ROUTES.length, 8);
+    assert.ok(!ROUTES.includes('/404.html'));
+    for (const prompt of Object.keys(PROMPT_MAPPINGS)) {
+      assert.ok(!mappedPages(prompt).includes('/404.html'), prompt);
+    }
+  });
 });
 
 describe('sitemap and robots', () => {

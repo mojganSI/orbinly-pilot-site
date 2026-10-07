@@ -1,6 +1,7 @@
 // Minimal local static server for dist/. For local checks only; production hosting is any
-// static host. Mirrors common host behaviour: directory index files, and a 301 from a
-// directory path without a trailing slash to the same path with one.
+// static host. Mirrors common host behaviour: directory index files, 404.html with status 404
+// for unknown paths, and a 301 from a directory path without a trailing slash to the same path
+// with one.
 //
 //   node scripts/serve.mjs            serves dist/ on http://localhost:4173
 //   PORT=8080 node scripts/serve.mjs
@@ -35,7 +36,8 @@ createServer(async (request, response) => {
   }
   const file = pathname.endsWith('/') ? join(target, 'index.html') : target;
   if (!(await isFile(file))) {
-    response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Not found');
+    const notFound = await readFile(join(DIST, '404.html')).catch(() => 'Not found');
+    response.writeHead(404, { 'Content-Type': TYPES['.html'] }).end(notFound);
     return;
   }
   response
